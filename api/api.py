@@ -17,9 +17,9 @@ app.config["DEBUG"] = True
 def home():
     return '''<h1>Test</h1>'''
 
-
 @app.route('/api/v1/tische/all', methods=['GET'])
 def api_all():
+
     conn = sqlite3.connect('../buchungssystem.sqlite')
     conn.row_factory = dict_factory
     cur = conn.cursor()
@@ -27,10 +27,47 @@ def api_all():
 
     return jsonify(all_books)
 
+@app.route('/api/v1/tische/nummer', methods=['GET'])
+def api_tischfilter():
+
+    conn = sqlite3.connect('../buchungssystem.sqlite')
+    conn.row_factory = dict_factory
+    cur = conn.cursor()
+
+    query_parameters = request.args
+
+    id = query_parameters.get('id')
+
+    result = cur.execute(f'select * from tische where tischnummer = "{id}";').fetchall()
+
+    if not result:
+        return page_not_found(404)
+
+    return jsonify(result)
+
+@app.route('/api/v1/tische/reservierungen', methods=['GET'])
+def api_freierZeitraum():
+
+    conn = sqlite3.connect('../buchungssystem.sqlite')
+    conn.row_factory = dict_factory
+    cur = conn.cursor()
+
+    query_parameters = request.args
+
+    time = query_parameters.get('time')
+    date = query_parameters.get('date')
+
+    gesamtes_datum = f"{date} {time}"
+
+    result = cur.execute(f'select * from reservierungen where zeitpunkt = "{gesamtes_datum}";').fetchall()
+
+    if not result:
+        return page_not_found(404)
+
+    return jsonify(result)
 
 @app.errorhandler(404)
 def page_not_found(e):
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
-
 
 app.run()
